@@ -1,0 +1,20 @@
+{
+  "name": "discordjs-template",
+  "version": "0.0.1",
+  "description": "",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "npx tsx watch src/index.ts",
+    "registercmds": "npx tsx src/registercmds.ts"
+  },
+  "author": "constt",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^14.26.4",
+    "dotenv": "^16.6.1",
+    "fs": "0.0.1-security",
+    "path": "^0.12.7",
+    "url": "^0.11.4"
+  }
+}
