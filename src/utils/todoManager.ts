@@ -14,13 +14,15 @@ import {
 } from "discord.js";
 
 const FILE = path.join(process.cwd(), "todos.json");
-const STAFF_ROLE = "1518156258387951656";
+const PANEL_ROLE = "1518157651526029423";
+const TODO_ROLE = "1518156258387951656";
 
 interface Todo {
   id: string;
   text: string;
   done: boolean;
   created: number;
+  userId: string;
 }
 
 interface TodoDB {
@@ -57,8 +59,12 @@ function nextId(todos: Record<string, Todo> | undefined) {
   return String(Object.keys(safe).length + 1).padStart(4, "0");
 }
 
-function hasRole(interaction: any) {
-  return interaction.member?.roles?.cache?.has(STAFF_ROLE);
+function canManageTodos(interaction: any) {
+  return interaction.member?.roles?.cache?.has(TODO_ROLE);
+}
+
+function canManagePanel(interaction: any) {
+  return interaction.member?.roles?.cache?.has(PANEL_ROLE);
 }
 
 function buildEmbed(todos: Record<string, Todo> | undefined) {
@@ -125,6 +131,13 @@ async function updatePanel(client: any) {
 }
 
 export async function sendTodoPanel(interaction: ChatInputCommandInteraction) {
+  if (!canManagePanel(interaction)) {
+    return interaction.reply({
+      content: "You do not have permission to send the todo panel.",
+      ephemeral: true,
+    });
+  }
+
   const db = loadDB();
 
   const msg = await interaction.channel?.send({
@@ -148,7 +161,7 @@ export async function sendTodoPanel(interaction: ChatInputCommandInteraction) {
 }
 
 export async function handleTodoButton(interaction: ButtonInteraction) {
-  if (!hasRole(interaction)) {
+  if (!canManageTodos(interaction)) {
     return interaction.reply({
       content: "No permission",
       ephemeral: true,
@@ -228,6 +241,7 @@ export async function handleTodoModal(interaction: ModalSubmitInteraction) {
       text: interaction.fields.getTextInputValue("text"),
       done: false,
       created: Date.now(),
+      userId: interaction.user.id,
     };
   }
 
@@ -238,6 +252,24 @@ export async function handleTodoModal(interaction: ModalSubmitInteraction) {
 
   if (interaction.customId === "todo_remove_modal") {
     const id = interaction.fields.getTextInputValue("id");
+    const todo = db.todos[id];
+
+    if (!todo) {
+      return interaction.reply({
+        content: "Todo not found.",
+        ephemeral: true,
+      });
+    }
+
+    const isPanelManager = canManagePanel(interaction);
+
+    if (!isPanelManager && todo.userId !== interaction.user.id) {
+      return interaction.reply({
+        content: "You can only remove your own todos.",
+        ephemeral: true,
+      });
+    }
+
     delete db.todos[id];
   }
 
