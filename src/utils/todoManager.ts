@@ -226,7 +226,7 @@ export async function handleTodoButton(interaction: ButtonInteraction) {
 export async function handleTodoModal(interaction: ModalSubmitInteraction) {
   const db = loadDB();
 
-  if (!hasRole(interaction)) {
+  if (!canManageTodos(interaction)) {
     return interaction.reply({
       content: "No permission",
       ephemeral: true,
